@@ -134,7 +134,7 @@ def run_backtest():
             "entry": position["entry"],
             "exit": exit_price,
             "pnl_price": pnl,
-            "result": "CLOSED"
+            "result": "result": "WIN" if pnl > 0 else "LOSS"
         })
 
     results = pd.DataFrame(trades)
