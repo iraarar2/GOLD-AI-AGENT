@@ -1,38 +1,51 @@
 
-def calculate_ema(prices, period):
-    if len(prices) < period:
-        return None
+import pandas as pd
 
-    multiplier = 2 / (period + 1)
-    ema = sum(prices[:period]) / period
 
-    for price in prices[period:]:
-        ema = (price * multiplier) + (ema * (1 - multiplier))
+EMA_FAST = 8
+EMA_MID = 21
+EMA_TREND = 125
 
-    return ema
+
+def add_ema_columns(df):
+    df = df.copy()
+
+    df["close"] = pd.to_numeric(df["close"])
+
+    df["ema8"] = df["close"].ewm(
+        span=EMA_FAST, adjust=False
+    ).mean()
+
+    df["ema21"] = df["close"].ewm(
+        span=EMA_MID, adjust=False
+    ).mean()
+
+    df["ema125"] = df["close"].ewm(
+        span=EMA_TREND, adjust=False
+    ).mean()
+
+    return df
 
 
 def analyze_gold(candles):
-    """
-    candles: list of dictionaries containing closing prices.
-    Example: [{"close": 3900.0}, ...]
-    """
 
-    if len(candles) < 125:
+    if len(candles) < EMA_TREND:
         return {
-            "signal": "NO TRADE",
+            "signal": "NO_TRADE",
             "reason": "Insufficient candle data"
         }
 
-    closes = [float(candle["close"]) for candle in candles]
+    df = pd.DataFrame(candles)
+    df = add_ema_columns(df)
 
-    ema8 = calculate_ema(closes, 8)
-    ema21 = calculate_ema(closes, 21)
-    ema125 = calculate_ema(closes, 125)
+    last = df.iloc[-1]
 
-    price = closes[-1]
+    price = float(last["close"])
+    ema8 = float(last["ema8"])
+    ema21 = float(last["ema21"])
+    ema125 = float(last["ema125"])
 
-    signal = "NO TRADE"
+    signal = "NO_TRADE"
     reason = "EMA conditions not aligned"
 
     if ema8 > ema21 and price > ema125:
