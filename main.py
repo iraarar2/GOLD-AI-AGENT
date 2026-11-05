@@ -1,56 +1,52 @@
+
 from dataclasses import dataclass
 from typing import Literal
 
-
-@dataclass
-class MarketAnalysis:
-    h4: str
-    h1: str
-    m15: str
-    m5: str
-    m3: str
-    spread_ok: bool
-    volatility_ok: bool
+from strategy import analyze_gold
 
 
 @dataclass
 class Decision:
     action: Literal["BUY", "SELL", "NO_TRADE"]
-    score: int
     reason: str
+    price: float
+    ema8: float
+    ema21: float
+    ema125: float
 
 
-def analyze_market(data: MarketAnalysis) -> Decision:
+def analyze_market(candles):
 
-    if not data.spread_ok:
-        return Decision("NO_TRADE", 0, "Spread terlalu tinggi")
+    result = analyze_gold(candles)
 
-    if not data.volatility_ok:
-        return Decision("NO_TRADE", 0, "Volatilitas tidak sesuai")
+    return Decision(
+        action=result["signal"],
+        reason=result["reason"],
+        price=result["price"],
+        ema8=result["ema8"],
+        ema21=result["ema21"],
+        ema125=result["ema125"]
+    )
 
-    timeframes = [
-        data.h4,
-        data.h1,
-        data.m15,
-        data.m5,
-        data.m3
-    ]
 
-    buy_score = sum(x == "BULLISH" for x in timeframes)
-    sell_score = sum(x == "BEARISH" for x in timeframes)
+def print_analysis(decision):
 
-    if buy_score >= 4 and data.m3 == "BULLISH":
-        return Decision("BUY", buy_score, "Konfirmasi bullish")
+    print("\n===== GOLD AI AGENT =====")
+    print("Symbol: XAUUSDm")
+    print("Strategy: EMA 8 / 21 / 125")
 
-    if sell_score >= 4 and data.m3 == "BEARISH":
-        return Decision("SELL", sell_score, "Konfirmasi bearish")
+    print("Price:", decision.price)
+    print("EMA 8:", decision.ema8)
+    print("EMA 21:", decision.ema21)
+    print("EMA 125:", decision.ema125)
 
-    return Decision("NO_TRADE", max(buy_score, sell_score),
-                    "Konfirmasi belum cukup")
+    print("Decision:", decision.action)
+    print("Reason:", decision.reason)
 
 
 if __name__ == "__main__":
+
     print("GOLD AI AGENT initialized")
-    print("Trading instrument: XAUUSDm")
-    print("Strategy: ICT/SMC Hybrid")
-    print("Mode: Analysis only")
+    print("Mode: EMA analysis")
+    print("Execution: Disabled")
+    print("Waiting for market data...")
